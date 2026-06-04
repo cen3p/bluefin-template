@@ -133,20 +133,20 @@ jobs:
       # They also check if the runner is on the default branch so that things like the merge queue (if you enable it), are going to work
       - name: Login to GitHub Container Registry
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/my-custom-bluefin')
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_PAT }}
 
       - name: Push To GHCR
         uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/my-custom-bluefin')
         id: push
         env:
           REGISTRY_USER: ${{ github.actor }}
-          REGISTRY_PASSWORD: ${{ github.token }}
-        with:
+          REGISTRY_PASSWORD: ${{ secrets.GHCR_PAT }}
+        with:  
           registry: ${{ env.IMAGE_REGISTRY }}
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
@@ -159,12 +159,12 @@ jobs:
       # to consume. For more details, review the image signing section of the README.
       - name: Install Cosign
         uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/my-custom-bluefin')
         with:
           cosign-release: 'v2.6.3'
 
       - name: Sign container image
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/my-custom-bluefin')
         run: |
           IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}"
           for tag in ${{ steps.metadata.outputs.tags }}; do
